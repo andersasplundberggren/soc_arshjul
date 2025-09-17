@@ -566,7 +566,7 @@
 
         let selectedMonth = null;
         let selectedColor = '#3B82F6';
-        let isLoggedIn = false;
+        let isLoggedIn = false; // Alltid börja utloggad
 
         const months = [
             'Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
@@ -577,10 +577,15 @@
 
         // Initialisering
         document.addEventListener('DOMContentLoaded', function() {
+            // Säkerställ att vi alltid börjar utloggade
+            isLoggedIn = false;
             initializeColorPicker();
             renderCalendar();
             renderActivityList();
             updateLoginUI();
+            
+            // Lägg till event listeners
+            document.getElementById('admin-login-btn').addEventListener('click', showAdminLogin);
         });
 
         function initializeColorPicker() {
@@ -637,6 +642,19 @@
             outerCircle.setAttribute('stroke-width', '1');
             outerCircle.setAttribute('stroke-dasharray', '2,2');
             svg.appendChild(outerCircle);
+
+            // Skapa en defs-sektion för textbanan
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            
+            // Skapa en osynlig cirkel för textbanan
+            const textPath = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            textPath.setAttribute('id', 'text-circle');
+            textPath.setAttribute('cx', centerX);
+            textPath.setAttribute('cy', centerY);
+            textPath.setAttribute('r', outerLabelRadius);
+            textPath.setAttribute('fill', 'none');
+            defs.appendChild(textPath);
+            svg.appendChild(defs);
 
             // Rita månadsindelningslinjer från inre till yttre cirkel
             for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
@@ -700,22 +718,53 @@
                     
                     svg.appendChild(activityRing);
                 });
+            }
 
-                // Månadsnamn på yttre cirkeln
-                const textAngle = (monthIndex * 30);
-                const textRadius = outerLabelRadius + 20;
-                const textX = centerX + textRadius * Math.cos((textAngle - 90) * Math.PI / 180);
-                const textY = centerY + textRadius * Math.sin((textAngle - 90) * Math.PI / 180);
-
-                const monthLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                monthLabel.setAttribute('x', textX);
-                monthLabel.setAttribute('y', textY);
-                monthLabel.setAttribute('text-anchor', 'middle');
-                monthLabel.setAttribute('dominant-baseline', 'central');
-                monthLabel.className = 'month-label';
-                monthLabel.textContent = months[monthIndex];
-                monthLabel.onclick = () => selectMonth(monthIndex);
-                svg.appendChild(monthLabel);
+            // Rita månadsnamn på den yttre cirkeln - centrerat för varje månad
+            for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+                // Beräkna vinkel för mitten av månaden
+                const angle = monthIndex * 30; // 30 grader per månad
+                const offsetAngle = angle - 90 + 15; // Starta från toppen och centrera (+15 för att komma till mitten av sektorn)
+                
+                // Skapa en kort båge för texten att följa på yttre cirkeln
+                const arcPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const pathId = `month-arc-${monthIndex}`;
+                arcPath.setAttribute('id', pathId);
+                
+                // Beräkna bågens start- och slutpunkter (12 grader före och efter månadscentrum)
+                const startAngle = (offsetAngle - 12) * (Math.PI / 180);
+                const endAngle = (offsetAngle + 12) * (Math.PI / 180);
+                
+                const startX = centerX + outerLabelRadius * Math.cos(startAngle);
+                const startY = centerY + outerLabelRadius * Math.sin(startAngle);
+                const endX = centerX + outerLabelRadius * Math.cos(endAngle);
+                const endY = centerY + outerLabelRadius * Math.sin(endAngle);
+                
+                const arcPathData = `M ${startX} ${startY} A ${outerLabelRadius} ${outerLabelRadius} 0 0 1 ${endX} ${endY}`;
+                arcPath.setAttribute('d', arcPathData);
+                arcPath.setAttribute('fill', 'none');
+                arcPath.setAttribute('stroke', 'none');
+                
+                // Lägg till path till defs
+                defs.appendChild(arcPath);
+                
+                // Skapa text som följer banan
+                const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                textElement.className = 'month-label';
+                textElement.setAttribute('text-anchor', 'middle');
+                textElement.setAttribute('font-size', '12');
+                textElement.setAttribute('font-weight', '600');
+                textElement.setAttribute('fill', '#374151');
+                textElement.style.cursor = 'pointer';
+                textElement.onclick = () => selectMonth(monthIndex);
+                
+                const textPath = document.createElementNS('http://www.w3.org/2000/svg', 'textPath');
+                textPath.setAttribute('href', `#${pathId}`);
+                textPath.setAttribute('startOffset', '50%'); // Centrera texten på banan
+                textPath.textContent = months[monthIndex];
+                
+                textElement.appendChild(textPath);
+                svg.appendChild(textElement);
             }
 
             // Centrumcirkel
@@ -826,11 +875,15 @@
             // Enkel autentisering för demo (i produktion skulle detta vara säkrare)
             if (username === 'admin' && password === 'password') {
                 isLoggedIn = true;
+                console.log('Login successful, isLoggedIn:', isLoggedIn); // Debug
                 updateLoginUI();
                 // Stäng inloggningsmodal
                 document.getElementById('login-overlay').classList.add('hidden');
                 // Rendera om för att visa admin-knappar
                 renderActivityList();
+                // Rensa formuläret
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
             } else {
                 alert('Felaktigt användarnamn eller lösenord. Försök med admin/password');
             }
@@ -838,6 +891,7 @@
 
         function logout() {
             isLoggedIn = false;
+            console.log('Logout, isLoggedIn:', isLoggedIn); // Debug
             updateLoginUI();
             renderActivityList();
             // Stäng eventuella öppna modaler
@@ -848,6 +902,8 @@
             const adminLoginBtn = document.getElementById('admin-login-btn');
             const loginControls = document.getElementById('login-controls');
             const adminElements = document.querySelectorAll('.admin-only');
+            
+            console.log('updateLoginUI called, isLoggedIn:', isLoggedIn); // Debug
             
             if (isLoggedIn) {
                 adminLoginBtn.style.display = 'none';
@@ -961,8 +1017,8 @@
             }
         });
 
-        // Lägg till klick-lyssnare för admin-knappen
-        document.getElementById('admin-login-btn').addEventListener('click', showAdminLogin);
+        // Lägg till klick-lyssnare för admin-knappen - Ta bort duplicerad kod
+        // Event listener läggs till i DOMContentLoaded ovan
     </script>
 </body>
 </html>
