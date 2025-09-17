@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cirkulär Aktivitetskalender</title>
+    <title>Årshjul socialtjänstenr</title>
     <style>
         * {
             box-sizing: border-box;
@@ -28,6 +28,20 @@
         .header {
             margin-bottom: 32px;
             text-align: center;
+            position: relative;
+        }
+
+        .header .logo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 60px;
+        }
+
+        .header .logo img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
         }
 
         .header h1 {
@@ -456,12 +470,15 @@
                     <circle cx="12" cy="7" r="4"></circle>
                 </svg>
                 Inloggad som admin
-                <button class="logout-btn" onclick="logout(); event.stopPropagation();">Logga ut</button>
+                <button class="logout-btn" onclick="logout()">Logga ut</button>
             </div>
         </div>
         <div class="header">
-            <h1>Cirkulär Aktivitetskalender</h1>
-            <p>Klicka på en månad för att visa aktiviteter. Aktiviteter läggs till som ringar från centrum och utåt.</p>
+            <div class="logo">
+                <img src="https://karlskoga.se/images/18.17cf90041722ce1749b5e/1640015633047/Karlskoga_liggande.png" alt="Karlskoga kommun" />
+            </div>
+            <h1>Årshjul socialtjänsten</h1>
+            <p>Klicka på en månad för att visa aktiviteter.</p>
         </div>
 
         <div class="main-content">
@@ -555,17 +572,17 @@
     <script>
         // Global variabler
         let activities = {
-            0: [{ id: 1, name: 'Projektstart', color: '#3B82F6' }], // Januari
+            0: [{ id: 1, name: 'Projektstart', color: '#48606B' }], // Januari - Primärfärg blågrå
             1: [
-                { id: 2, name: 'Kund A möte', color: '#EF4444' },
-                { id: 3, name: 'Design review', color: '#10B981' }
-            ], // Februari
-            5: [{ id: 4, name: 'Semester', color: '#F59E0B' }], // Juni
-            11: [{ id: 5, name: 'Årsbokslut', color: '#8B5CF6' }] // December
+                { id: 2, name: 'Kund A möte', color: '#00A78B' }, // Februari - Primärfärg turkos
+                { id: 3, name: 'Design review', color: '#5863C7' } // Februari - Primärfärg blå
+            ],
+            5: [{ id: 4, name: 'Semester', color: '#88A8B5' }], // Juni - Ljus sekundärfärg
+            11: [{ id: 5, name: 'Årsbokslut', color: '#9D3E9E' }] // December - Primärfärg lila
         };
 
         let selectedMonth = null;
-        let selectedColor = '#3B82F6';
+        let selectedColor = '#48606B'; // Starta med primärfärgen
         let isLoggedIn = false; // Alltid börja utloggad
 
         const months = [
@@ -573,7 +590,16 @@
             'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'
         ];
 
-        const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+        const colors = [
+            '#48606B', // Primärfärg - Blågrå
+            '#00A78B', // Primärfärg - Turkos
+            '#5863C7', // Primärfärg - Blå
+            '#9D3E9E', // Primärfärg - Lila
+            '#D5422D', // Primärfärg - Röd
+            '#2A2F31', // Mörk sekundärfärg - Mörkgrå
+            '#88A8B5', // Ljus sekundärfärg - Ljusblå
+            '#0F6F60'  // Mörk sekundärfärg - Mörkturkos
+        ];
 
         // Initialisering
         document.addEventListener('DOMContentLoaded', function() {
@@ -852,9 +878,7 @@
                             <p>${months[activity.month]}</p>
                         </div>
                     </div>
-                    <button class="btn btn-danger admin-only" onclick="removeActivity(${activity.month}, ${activity.id})">
-                        Ta bort
-                    </button>
+                    ${isLoggedIn ? `<button class="btn btn-danger" onclick="removeActivity(${activity.month}, ${activity.id})">Ta bort</button>` : ''}
                 </div>
             `).join('');
         }
@@ -872,64 +896,72 @@
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             
-            // Enkel autentisering för demo (i produktion skulle detta vara säkrare)
+            console.log('Login attempt:', username, password);
+            
             if (username === 'admin' && password === 'password') {
                 isLoggedIn = true;
-                console.log('Login successful, isLoggedIn:', isLoggedIn); // Debug
-                updateLoginUI();
+                console.log('Login successful, isLoggedIn now:', isLoggedIn);
+                
                 // Stäng inloggningsmodal
                 document.getElementById('login-overlay').classList.add('hidden');
-                // Rendera om för att visa admin-knappar
+                
+                // Uppdatera UI
+                updateLoginUI();
                 renderActivityList();
+                
                 // Rensa formuläret
                 document.getElementById('username').value = '';
                 document.getElementById('password').value = '';
+                
+                console.log('Login process completed');
             } else {
                 alert('Felaktigt användarnamn eller lösenord. Försök med admin/password');
             }
         }
 
         function logout() {
-            console.log('Logout called, current isLoggedIn:', isLoggedIn); // Debug
-            if (!isLoggedIn) {
-                console.log('Already logged out, returning'); // Debug
-                return; // Förhindra multipla anrop
-            }
-            
+            console.log('Logout clicked!');
             isLoggedIn = false;
-            console.log('Logout, isLoggedIn set to:', isLoggedIn); // Debug
             updateLoginUI();
             renderActivityList();
-            // Stäng eventuella öppna modaler
             hideAddForm();
         }
 
         function updateLoginUI() {
+            console.log('updateLoginUI called, isLoggedIn:', isLoggedIn);
+            
             const adminLoginBtn = document.getElementById('admin-login-btn');
             const loginControls = document.getElementById('login-controls');
-            const adminElements = document.querySelectorAll('.admin-only');
             
-            console.log('updateLoginUI called, isLoggedIn:', isLoggedIn); // Debug
-            console.log('adminLoginBtn exists:', !!adminLoginBtn); // Debug
-            console.log('loginControls exists:', !!loginControls); // Debug
-            
+            // Tvinga en omritning genom att sätta styles direkt
             if (isLoggedIn) {
-                if (adminLoginBtn) adminLoginBtn.style.display = 'none';
-                if (loginControls) loginControls.classList.remove('hidden');
+                console.log('Should show logged in state');
+                adminLoginBtn.style.display = 'none';
+                adminLoginBtn.style.visibility = 'hidden';
+                loginControls.style.display = 'flex';
+                loginControls.classList.remove('hidden');
                 
-                // Visa admin-element
-                adminElements.forEach(element => {
+                // Visa alla admin-knappar
+                document.querySelectorAll('.admin-only').forEach(element => {
+                    element.style.display = element.classList.contains('btn') ? 'flex' : 'block';
                     element.classList.add('show');
                 });
             } else {
-                if (adminLoginBtn) adminLoginBtn.style.display = 'flex';
-                if (loginControls) loginControls.classList.add('hidden');
+                console.log('Should show logged out state');
+                adminLoginBtn.style.display = 'flex';
+                adminLoginBtn.style.visibility = 'visible';
+                loginControls.style.display = 'none';
+                loginControls.classList.add('hidden');
                 
-                // Dölj admin-element
-                adminElements.forEach(element => {
+                // Dölj alla admin-knappar
+                document.querySelectorAll('.admin-only').forEach(element => {
+                    element.style.display = 'none';
                     element.classList.remove('show');
                 });
             }
+            
+            console.log('Admin button display:', adminLoginBtn.style.display);
+            console.log('Login controls display:', loginControls.style.display);
         }
 
         function showAdminLogin() {
