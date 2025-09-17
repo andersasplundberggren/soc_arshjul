@@ -377,6 +377,29 @@
             background: #4b5563;
         }
 
+        .admin-login-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 1500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .admin-login-btn:hover {
+            background: #4b5563;
+            transform: translateY(-1px);
+        }
+
         .admin-only {
             display: none;
         }
@@ -387,16 +410,6 @@
 
         .admin-only.show-block {
             display: block;
-        }
-
-        .view-only-message {
-            background: #f3f4f6;
-            color: #6b7280;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 16px;
-            font-size: 0.875rem;
-            text-align: center;
         }
     </style>
 </head>
@@ -426,7 +439,16 @@
             </div>
         </div>
 
-        <!-- Login Controls -->
+        <!-- Admin/Login Controls -->
+        <div id="admin-login-btn" class="admin-login-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4"></path>
+                <path d="M21 12c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2s.9-2 2-2h14c1.1 0 2 .9 2 2z"></path>
+                <path d="M17 12c0-2.8-2.2-5-5-5s-5 2.2-5 5"></path>
+            </svg>
+            Admin
+        </div>
+        
         <div id="login-controls" class="login-controls hidden">
             <div class="user-badge">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -447,7 +469,7 @@
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">Kalendervy</h2>
-                    <button class="btn" onclick="showAddForm()">
+                    <button class="btn admin-only" onclick="showAddForm()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -457,7 +479,7 @@
                 </div>
 
                 <div class="calendar-container">
-                    <svg id="calendar-svg" width="400" height="400" class="calendar-svg">
+                    <svg id="calendar-svg" width="440" height="440" class="calendar-svg">
                         <!-- Kalendern renderas här av JavaScript -->
                     </svg>
                 </div>
@@ -593,6 +615,49 @@
             const centerY = 200;
             const baseRadius = 60;
             const ringWidth = 25;
+            const outerLabelRadius = 180; // Radius för yttre cirkel med månadsnamn
+
+            // Först, beräkna maxradie för att bestämma yttre cirkelns storlek
+            let globalMaxRadius = baseRadius;
+            for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+                const monthActivities = activities[monthIndex] || [];
+                const maxRadius = baseRadius + (monthActivities.length * ringWidth);
+                if (maxRadius > globalMaxRadius) {
+                    globalMaxRadius = maxRadius;
+                }
+            }
+
+            // Rita yttre cirkel med månadsnamn
+            const outerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            outerCircle.setAttribute('cx', centerX);
+            outerCircle.setAttribute('cy', centerY);
+            outerCircle.setAttribute('r', outerLabelRadius);
+            outerCircle.setAttribute('fill', 'none');
+            outerCircle.setAttribute('stroke', '#E5E7EB');
+            outerCircle.setAttribute('stroke-width', '1');
+            outerCircle.setAttribute('stroke-dasharray', '2,2');
+            svg.appendChild(outerCircle);
+
+            // Rita månadsindelningslinjer från inre till yttre cirkel
+            for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+                const angle = (monthIndex * 30 - 90) * (Math.PI / 180);
+                
+                // Linje från inre cirkel till yttre cirkel
+                const lineInnerX = centerX + baseRadius * Math.cos(angle);
+                const lineInnerY = centerY + baseRadius * Math.sin(angle);
+                const lineOuterX = centerX + outerLabelRadius * Math.cos(angle);
+                const lineOuterY = centerY + outerLabelRadius * Math.sin(angle);
+                
+                const monthLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                monthLine.setAttribute('x1', lineInnerX);
+                monthLine.setAttribute('y1', lineInnerY);
+                monthLine.setAttribute('x2', lineOuterX);
+                monthLine.setAttribute('y2', lineOuterY);
+                monthLine.setAttribute('stroke', '#E5E7EB');
+                monthLine.setAttribute('stroke-width', '1');
+                monthLine.setAttribute('opacity', '0.5');
+                svg.appendChild(monthLine);
+            }
 
             // Rita månadssektioner och aktiviteter
             for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
@@ -636,9 +701,9 @@
                     svg.appendChild(activityRing);
                 });
 
-                // Månadsnamn
+                // Månadsnamn på yttre cirkeln
                 const textAngle = (monthIndex * 30);
-                const textRadius = maxRadius + 15;
+                const textRadius = outerLabelRadius + 20;
                 const textX = centerX + textRadius * Math.cos((textAngle - 90) * Math.PI / 180);
                 const textY = centerY + textRadius * Math.sin((textAngle - 90) * Math.PI / 180);
 
@@ -648,7 +713,7 @@
                 monthLabel.setAttribute('text-anchor', 'middle');
                 monthLabel.setAttribute('dominant-baseline', 'central');
                 monthLabel.className = 'month-label';
-                monthLabel.textContent = months[monthIndex].substring(0, 3);
+                monthLabel.textContent = months[monthIndex];
                 monthLabel.onclick = () => selectMonth(monthIndex);
                 svg.appendChild(monthLabel);
             }
@@ -662,20 +727,6 @@
             centerCircle.setAttribute('stroke', '#D1D5DB');
             centerCircle.setAttribute('stroke-width', '2');
             svg.appendChild(centerCircle);
-
-            // År i centrum - Ta bort denna sektion
-            /*
-            const yearText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            yearText.setAttribute('x', centerX);
-            yearText.setAttribute('y', centerY);
-            yearText.setAttribute('text-anchor', 'middle');
-            yearText.setAttribute('dominant-baseline', 'central');
-            yearText.setAttribute('fill', '#6B7280');
-            yearText.setAttribute('font-size', '14');
-            yearText.setAttribute('font-weight', '500');
-            yearText.textContent = new Date().getFullYear();
-            svg.appendChild(yearText);
-            */
         }
 
         function createSectorPath(centerX, centerY, innerRadius, outerRadius, startAngle, endAngle) {
@@ -752,7 +803,7 @@
                             <p>${months[activity.month]}</p>
                         </div>
                     </div>
-                    <button class="btn btn-danger" onclick="removeActivity(${activity.month}, ${activity.id})">
+                    <button class="btn btn-danger admin-only" onclick="removeActivity(${activity.month}, ${activity.id})">
                         Ta bort
                     </button>
                 </div>
@@ -778,8 +829,8 @@
                 updateLoginUI();
                 // Stäng inloggningsmodal
                 document.getElementById('login-overlay').classList.add('hidden');
-                // Öppna lägg till-formulär om det var därför användaren loggade in
-                showAddForm();
+                // Rendera om för att visa admin-knappar
+                renderActivityList();
             } else {
                 alert('Felaktigt användarnamn eller lösenord. Försök med admin/password');
             }
@@ -788,24 +839,42 @@
         function logout() {
             isLoggedIn = false;
             updateLoginUI();
+            renderActivityList();
             // Stäng eventuella öppna modaler
             hideAddForm();
         }
 
         function updateLoginUI() {
+            const adminLoginBtn = document.getElementById('admin-login-btn');
             const loginControls = document.getElementById('login-controls');
+            const adminElements = document.querySelectorAll('.admin-only');
             
             if (isLoggedIn) {
+                adminLoginBtn.style.display = 'none';
                 loginControls.classList.remove('hidden');
+                
+                // Visa admin-element
+                adminElements.forEach(element => {
+                    element.classList.add('show');
+                });
             } else {
+                adminLoginBtn.style.display = 'flex';
                 loginControls.classList.add('hidden');
+                
+                // Dölj admin-element
+                adminElements.forEach(element => {
+                    element.classList.remove('show');
+                });
             }
+        }
+
+        function showAdminLogin() {
+            document.getElementById('login-overlay').classList.remove('hidden');
         }
 
         function showAddForm() {
             if (!isLoggedIn) {
-                // Visa inloggningsmodal istället
-                document.getElementById('login-overlay').classList.remove('hidden');
+                showAdminLogin();
                 return;
             }
             document.getElementById('add-activity-modal').classList.add('active');
@@ -850,8 +919,7 @@
 
         function removeActivity(monthIndex, activityId) {
             if (!isLoggedIn) {
-                // Visa inloggningsmodal istället
-                document.getElementById('login-overlay').classList.remove('hidden');
+                showAdminLogin();
                 return;
             }
             
@@ -892,6 +960,9 @@
                 login();
             }
         });
+
+        // Lägg till klick-lyssnare för admin-knappen
+        document.getElementById('admin-login-btn').addEventListener('click', showAdminLogin);
     </script>
 </body>
 </html>
