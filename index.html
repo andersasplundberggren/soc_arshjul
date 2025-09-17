@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cirkulär Aktivitetskalender</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f9fafb;
+            color: #111827;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .header {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .calendar-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .calendar-svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .month-sector {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .month-sector:hover {
+            opacity: 0.8;
+        }
+
+        .activity-ring {
+            cursor: pointer;
+            opacity: 0.8;
+            transition: all 0.2s;
+        }
+
+        .activity-ring:hover {
+            opacity: 1;
+        }
+
+        .month-label {
+            fill: #374151;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .selected-month-info {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 0.875rem;
+        }
+
+        .activity-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .activity-item:hover {
+            background: #f3f4f6;
+        }
+
+        .activity-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .activity-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .activity-details h3 {
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .activity-details p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 0;
+            color: #6b7280;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            opacity: 0.5;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            margin: 16px;
+        }
+
+        .modal-header {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .color-option {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #d1d5db;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .color-option.selected {
+            border-color: #1f2937;
+            transform: scale(1.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* Login Styles */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .login-overlay.hidden {
+            display: none;
+        }
+
+        .login-form {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            width: 100%;
+            max-width: 400px;
+            margin: 16px;
+            text-align: center;
+        }
+
+        .login-form h2 {
+            margin-bottom: 24px;
+            font-size: 1.5rem;
+            color: #1f2937;
+        }
+
+        .login-form p {
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .login-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1500;
+        }
+
+        .user-badge {
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: #4b5563;
+        }
+
+        .admin-only {
+            display: none;
+        }
+
+        .admin-only.show {
+            display: flex;
+        }
+
+        .admin-only.show-block {
+            display: block;
+        }
+
+        .view-only-message {
+            background: #f3f4f6;
+            color: #6b7280;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 0.875rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Overlay -->
+        <div id="login-overlay" class="login-overlay hidden">
+            <div class="login-form">
+                <h2>Inloggning krävs</h2>
+                <p>För att redigera aktiviteter behöver du logga in som administratör.</p>
+                
+                <div class="form-group">
+                    <label class="form-label" for="username">Användarnamn</label>
+                    <input type="text" id="username" class="form-input" placeholder="admin">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Lösenord</label>
+                    <input type="password" id="password" class="form-input" placeholder="Ange lösenord">
+                </div>
+
+                <button class="btn" onclick="login()">Logga in</button>
+                
+                <div style="margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 8px; font-size: 0.875rem; color: #6b7280;">
+                    Demo: användarnamn = <strong>admin</strong>, lösenord = <strong>password</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Controls -->
+        <div id="login-controls" class="login-controls hidden">
+            <div class="user-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Inloggad som admin
+                <button class="logout-btn" onclick="logout()">Logga ut</button>
+            </div>
+        </div>
+        <div class="header">
+            <h1>Cirkulär Aktivitetskalender</h1>
+            <p>Klicka på en månad för att visa aktiviteter. Aktiviteter läggs till som ringar från centrum och utåt.</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Cirkulär kalender -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Kalendervy</h2>
+                    <button class="btn" onclick="showAddForm()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Lägg till aktivitet
+                    </button>
+                </div>
+
+                <div class="calendar-container">
+                    <svg id="calendar-svg" width="400" height="400" class="calendar-svg">
+                        <!-- Kalendern renderas här av JavaScript -->
+                    </svg>
+                </div>
+
+                <div id="selected-month-info" class="selected-month-info" style="display: none;">
+                    <!-- Månadsinfo visas här -->
+                </div>
+            </div>
+
+            <!-- Aktivitetslista -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 8px;">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span id="activity-list-title">Alla aktiviteter</span>
+                    </h2>
+                </div>
+
+                <div id="activity-list" class="activity-list">
+                    <!-- Aktiviteter renderas här av JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal för att lägga till aktivitet -->
+    <div id="add-activity-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Lägg till ny aktivitet</div>
+            
+            <div class="form-group">
+                <label class="form-label" for="activity-name">Aktivitetsnamn</label>
+                <input type="text" id="activity-name" class="form-input" placeholder="T.ex. Projektmöte">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="activity-month">Månad</label>
+                <select id="activity-month" class="form-input">
+                    <option value="0">Januari</option>
+                    <option value="1">Februari</option>
+                    <option value="2">Mars</option>
+                    <option value="3">April</option>
+                    <option value="4">Maj</option>
+                    <option value="5">Juni</option>
+                    <option value="6">Juli</option>
+                    <option value="7">Augusti</option>
+                    <option value="8">September</option>
+                    <option value="9">Oktober</option>
+                    <option value="10">November</option>
+                    <option value="11">December</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Färg</label>
+                <div class="color-picker" id="color-picker">
+                    <!-- Färgalternativ läggs till av JavaScript -->
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideAddForm()">Avbryt</button>
+                <button class="btn" onclick="addActivity()">Lägg till</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variabler
+        let activities = {
+            0: [{ id: 1, name: 'Projektstart', color: '#3B82F6' }], // Januari
+            1: [
+                { id: 2, name: 'Kund A möte', color: '#EF4444' },
+                { id: 3, name: 'Design review', color: '#10B981' }
+            ], // Februari
+            5: [{ id: 4, name: 'Semester', color: '#F59E0B' }], // Juni
+            11: [{ id: 5, name: 'Årsbokslut', color: '#8B5CF6' }] // December
+        };
+
+        let selectedMonth = null;
+        let selectedColor = '#3B82F6';
+        let isLoggedIn = false;
+
+        const months = [
+            'Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
+            'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'
+        ];
+
+        const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+
+        // Initialisering
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeColorPicker();
+            renderCalendar();
+            renderActivityList();
+            updateLoginUI();
+        });
+
+        function initializeColorPicker() {
+            const colorPicker = document.getElementById('color-picker');
+            colors.forEach(color => {
+                const colorOption = document.createElement('div');
+                colorOption.className = 'color-option';
+                colorOption.style.backgroundColor = color;
+                if (color === selectedColor) {
+                    colorOption.classList.add('selected');
+                }
+                colorOption.onclick = () => selectColor(color);
+                colorPicker.appendChild(colorOption);
+            });
+        }
+
+        function selectColor(color) {
+            selectedColor = color;
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('selected');
+                if (option.style.backgroundColor === color) {
+                    option.classList.add('selected');
+                }
+            });
+        }
+
+        function renderCalendar() {
+            const svg = document.getElementById('calendar-svg');
+            svg.innerHTML = '';
+
+            const centerX = 200;
+            const centerY = 200;
+            const baseRadius = 60;
+            const ringWidth = 25;
+
+            // Rita månadssektioner och aktiviteter
+            for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+                const startAngle = (monthIndex * 30 - 90) * (Math.PI / 180);
+                const endAngle = ((monthIndex + 1) * 30 - 90) * (Math.PI / 180);
+                const monthActivities = activities[monthIndex] || [];
+                const maxRadius = baseRadius + (monthActivities.length * ringWidth);
+
+                // Bakgrundssektioner för månad
+                const monthSector = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const pathData = createSectorPath(centerX, centerY, baseRadius, maxRadius, startAngle, endAngle);
+                
+                monthSector.setAttribute('d', pathData);
+                monthSector.setAttribute('fill', selectedMonth === monthIndex ? '#E5E7EB' : '#F9FAFB');
+                monthSector.setAttribute('stroke', '#D1D5DB');
+                monthSector.setAttribute('stroke-width', '1');
+                monthSector.className = 'month-sector';
+                monthSector.onclick = () => selectMonth(monthIndex);
+                svg.appendChild(monthSector);
+
+                // Rita aktivitetsringar
+                monthActivities.forEach((activity, activityIndex) => {
+                    const innerRadius = baseRadius + (activityIndex * ringWidth);
+                    const outerRadius = innerRadius + ringWidth;
+                    
+                    const activityRing = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    const activityPath = createSectorPath(centerX, centerY, innerRadius, outerRadius, startAngle, endAngle);
+                    
+                    activityRing.setAttribute('d', activityPath);
+                    activityRing.setAttribute('fill', activity.color);
+                    activityRing.setAttribute('stroke', '#FFFFFF');
+                    activityRing.setAttribute('stroke-width', '1');
+                    activityRing.className = 'activity-ring';
+                    activityRing.onclick = () => selectMonth(monthIndex);
+                    
+                    // Tooltip
+                    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                    title.textContent = activity.name;
+                    activityRing.appendChild(title);
+                    
+                    svg.appendChild(activityRing);
+                });
+
+                // Månadsnamn
+                const textAngle = (monthIndex * 30);
+                const textRadius = maxRadius + 15;
+                const textX = centerX + textRadius * Math.cos((textAngle - 90) * Math.PI / 180);
+                const textY = centerY + textRadius * Math.sin((textAngle - 90) * Math.PI / 180);
+
+                const monthLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                monthLabel.setAttribute('x', textX);
+                monthLabel.setAttribute('y', textY);
+                monthLabel.setAttribute('text-anchor', 'middle');
+                monthLabel.setAttribute('dominant-baseline', 'central');
+                monthLabel.className = 'month-label';
+                monthLabel.textContent = months[monthIndex].substring(0, 3);
+                monthLabel.onclick = () => selectMonth(monthIndex);
+                svg.appendChild(monthLabel);
+            }
+
+            // Centrumcirkel
+            const centerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            centerCircle.setAttribute('cx', centerX);
+            centerCircle.setAttribute('cy', centerY);
+            centerCircle.setAttribute('r', baseRadius);
+            centerCircle.setAttribute('fill', '#F3F4F6');
+            centerCircle.setAttribute('stroke', '#D1D5DB');
+            centerCircle.setAttribute('stroke-width', '2');
+            svg.appendChild(centerCircle);
+
+            // År i centrum - Ta bort denna sektion
+            /*
+            const yearText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            yearText.setAttribute('x', centerX);
+            yearText.setAttribute('y', centerY);
+            yearText.setAttribute('text-anchor', 'middle');
+            yearText.setAttribute('dominant-baseline', 'central');
+            yearText.setAttribute('fill', '#6B7280');
+            yearText.setAttribute('font-size', '14');
+            yearText.setAttribute('font-weight', '500');
+            yearText.textContent = new Date().getFullYear();
+            svg.appendChild(yearText);
+            */
+        }
+
+        function createSectorPath(centerX, centerY, innerRadius, outerRadius, startAngle, endAngle) {
+            const x1 = centerX + innerRadius * Math.cos(startAngle);
+            const y1 = centerY + innerRadius * Math.sin(startAngle);
+            const x2 = centerX + outerRadius * Math.cos(startAngle);
+            const y2 = centerY + outerRadius * Math.sin(startAngle);
+            const x3 = centerX + outerRadius * Math.cos(endAngle);
+            const y3 = centerY + outerRadius * Math.sin(endAngle);
+            const x4 = centerX + innerRadius * Math.cos(endAngle);
+            const y4 = centerY + innerRadius * Math.sin(endAngle);
+
+            return [
+                `M ${x1} ${y1}`,
+                `L ${x2} ${y2}`,
+                `A ${outerRadius} ${outerRadius} 0 0 1 ${x3} ${y3}`,
+                `L ${x4} ${y4}`,
+                `A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1}`,
+                'Z'
+            ].join(' ');
+        }
+
+        function selectMonth(monthIndex) {
+            if (selectedMonth === monthIndex) {
+                selectedMonth = null;
+            } else {
+                selectedMonth = monthIndex;
+            }
+            
+            renderCalendar();
+            renderActivityList();
+            updateSelectedMonthInfo();
+        }
+
+        function updateSelectedMonthInfo() {
+            const infoDiv = document.getElementById('selected-month-info');
+            if (selectedMonth !== null) {
+                infoDiv.style.display = 'block';
+                infoDiv.innerHTML = `Visar aktiviteter för <strong>${months[selectedMonth]}</strong>. Klicka igen för att visa alla månader.`;
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        }
+
+        function renderActivityList() {
+            const listContainer = document.getElementById('activity-list');
+            const titleElement = document.getElementById('activity-list-title');
+            
+            // Uppdatera titel
+            titleElement.textContent = selectedMonth !== null ? 
+                `${months[selectedMonth]} aktiviteter` : 'Alla aktiviteter';
+            
+            // Hämta filtrerade aktiviteter
+            const filteredActivities = getFilteredActivities();
+            
+            if (filteredActivities.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m8 3 4 8 5-5 5 15H2L8 3z"></path>
+                        </svg>
+                        <p>Inga aktiviteter att visa</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listContainer.innerHTML = filteredActivities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-info">
+                        <div class="activity-color" style="background-color: ${activity.color}"></div>
+                        <div class="activity-details">
+                            <h3>${activity.name}</h3>
+                            <p>${months[activity.month]}</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" onclick="removeActivity(${activity.month}, ${activity.id})">
+                        Ta bort
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function getFilteredActivities() {
+            if (selectedMonth === null) {
+                return Object.entries(activities).flatMap(([monthIndex, monthActivities]) =>
+                    monthActivities.map(activity => ({ ...activity, month: parseInt(monthIndex) }))
+                );
+            }
+            return (activities[selectedMonth] || []).map(activity => ({ ...activity, month: selectedMonth }));
+        }
+
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            // Enkel autentisering för demo (i produktion skulle detta vara säkrare)
+            if (username === 'admin' && password === 'password') {
+                isLoggedIn = true;
+                updateLoginUI();
+                // Stäng inloggningsmodal
+                document.getElementById('login-overlay').classList.add('hidden');
+                // Öppna lägg till-formulär om det var därför användaren loggade in
+                showAddForm();
+            } else {
+                alert('Felaktigt användarnamn eller lösenord. Försök med admin/password');
+            }
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            updateLoginUI();
+            // Stäng eventuella öppna modaler
+            hideAddForm();
+        }
+
+        function updateLoginUI() {
+            const loginControls = document.getElementById('login-controls');
+            
+            if (isLoggedIn) {
+                loginControls.classList.remove('hidden');
+            } else {
+                loginControls.classList.add('hidden');
+            }
+        }
+
+        function showAddForm() {
+            if (!isLoggedIn) {
+                // Visa inloggningsmodal istället
+                document.getElementById('login-overlay').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('add-activity-modal').classList.add('active');
+            document.getElementById('activity-name').value = '';
+            document.getElementById('activity-month').value = selectedMonth || 0;
+            selectColor(colors[Math.floor(Math.random() * colors.length)]);
+        }
+
+        function hideAddForm() {
+            document.getElementById('add-activity-modal').classList.remove('active');
+        }
+
+        function addActivity() {
+            if (!isLoggedIn) {
+                alert('Du måste logga in för att lägga till aktiviteter.');
+                return;
+            }
+            
+            const name = document.getElementById('activity-name').value.trim();
+            const month = parseInt(document.getElementById('activity-month').value);
+            
+            if (!name) {
+                alert('Vänligen ange ett aktivitetsnamn');
+                return;
+            }
+            
+            const activityId = Date.now();
+            if (!activities[month]) {
+                activities[month] = [];
+            }
+            
+            activities[month].push({
+                id: activityId,
+                name: name,
+                color: selectedColor
+            });
+            
+            renderCalendar();
+            renderActivityList();
+            hideAddForm();
+        }
+
+        function removeActivity(monthIndex, activityId) {
+            if (!isLoggedIn) {
+                // Visa inloggningsmodal istället
+                document.getElementById('login-overlay').classList.remove('hidden');
+                return;
+            }
+            
+            if (activities[monthIndex]) {
+                activities[monthIndex] = activities[monthIndex].filter(activity => activity.id !== activityId);
+                if (activities[monthIndex].length === 0) {
+                    delete activities[monthIndex];
+                }
+            }
+            
+            renderCalendar();
+            renderActivityList();
+        }
+
+        // Stäng modal vid klick utanför
+        document.getElementById('add-activity-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideAddForm();
+            }
+        });
+
+        // Stäng inloggningsmodal vid klick utanför
+        document.getElementById('login-overlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                document.getElementById('login-overlay').classList.add('hidden');
+            }
+        });
+
+        // Tillåt Enter-tangent för inloggning
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+        
+        document.getElementById('username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+    </script>
+</body>
+</html>
