@@ -456,7 +456,7 @@
                     <circle cx="12" cy="7" r="4"></circle>
                 </svg>
                 Inloggad som admin
-                <button class="logout-btn" onclick="logout()">Logga ut</button>
+                <button class="logout-btn" onclick="logout(); event.stopPropagation();">Logga ut</button>
             </div>
         </div>
         <div class="header">
@@ -890,8 +890,14 @@
         }
 
         function logout() {
+            console.log('Logout called, current isLoggedIn:', isLoggedIn); // Debug
+            if (!isLoggedIn) {
+                console.log('Already logged out, returning'); // Debug
+                return; // Förhindra multipla anrop
+            }
+            
             isLoggedIn = false;
-            console.log('Logout, isLoggedIn:', isLoggedIn); // Debug
+            console.log('Logout, isLoggedIn set to:', isLoggedIn); // Debug
             updateLoginUI();
             renderActivityList();
             // Stäng eventuella öppna modaler
@@ -904,18 +910,20 @@
             const adminElements = document.querySelectorAll('.admin-only');
             
             console.log('updateLoginUI called, isLoggedIn:', isLoggedIn); // Debug
+            console.log('adminLoginBtn exists:', !!adminLoginBtn); // Debug
+            console.log('loginControls exists:', !!loginControls); // Debug
             
             if (isLoggedIn) {
-                adminLoginBtn.style.display = 'none';
-                loginControls.classList.remove('hidden');
+                if (adminLoginBtn) adminLoginBtn.style.display = 'none';
+                if (loginControls) loginControls.classList.remove('hidden');
                 
                 // Visa admin-element
                 adminElements.forEach(element => {
                     element.classList.add('show');
                 });
             } else {
-                adminLoginBtn.style.display = 'flex';
-                loginControls.classList.add('hidden');
+                if (adminLoginBtn) adminLoginBtn.style.display = 'flex';
+                if (loginControls) loginControls.classList.add('hidden');
                 
                 // Dölj admin-element
                 adminElements.forEach(element => {
