@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Årshjul socialtjänstenr</title>
+    <title>Socialtjänstens årshjul</title>
     <style>
         * {
             box-sizing: border-box;
@@ -35,7 +35,11 @@
             position: absolute;
             top: 0;
             left: 0;
-            height: 60px;
+            height: 40px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .header .logo img {
@@ -437,7 +441,7 @@
                 
                 <div class="form-group">
                     <label class="form-label" for="username">Användarnamn</label>
-                    <input type="text" id="username" class="form-input" placeholder="admin">
+                    <input type="text" id="username" class="form-input" placeholder="Ange användarnamn">
                 </div>
 
                 <div class="form-group">
@@ -446,10 +450,6 @@
                 </div>
 
                 <button class="btn" onclick="login()">Logga in</button>
-                
-                <div style="margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 8px; font-size: 0.875rem; color: #6b7280;">
-                    Demo: användarnamn = <strong>admin</strong>, lösenord = <strong>password</strong>
-                </div>
             </div>
         </div>
 
@@ -477,7 +477,7 @@
             <div class="logo">
                 <img src="https://karlskoga.se/images/18.17cf90041722ce1749b5e/1640015633047/Karlskoga_liggande.png" alt="Karlskoga kommun" />
             </div>
-            <h1>Årshjul socialtjänsten</h1>
+            <h1>Socialtjänstens årshjul</h1>
             <p>Klicka på en månad för att visa aktiviteter.</p>
         </div>
 
@@ -898,7 +898,8 @@
             
             console.log('Login attempt:', username, password);
             
-            if (username === 'admin' && password === 'password') {
+            // ÄNDRA ANVÄNDARNAMN OCH LÖSENORD HÄR:
+            if (username === 'admin' && password === 'kommun2025') {
                 isLoggedIn = true;
                 console.log('Login successful, isLoggedIn now:', isLoggedIn);
                 
@@ -915,7 +916,7 @@
                 
                 console.log('Login process completed');
             } else {
-                alert('Felaktigt användarnamn eller lösenord. Försök med admin/password');
+                alert('Felaktigt användarnamn eller lösenord.');
             }
         }
 
