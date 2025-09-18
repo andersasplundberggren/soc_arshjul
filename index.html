@@ -144,23 +144,27 @@
             height: auto;
         }
 
-        .month-sector {
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .month-sector:hover {
-            opacity: 0.8;
-        }
-
         .activity-ring {
             cursor: pointer;
-            opacity: 0.8;
-            transition: all 0.2s;
+            opacity: 0.85;
+            transition: all 0.3s ease;
+            stroke-width: 1;
         }
 
         .activity-ring:hover {
             opacity: 1;
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+
+        .month-sector {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .month-sector:hover {
+            opacity: 0.7;
+            transform: scale(1.01);
         }
 
         .month-label {
@@ -180,7 +184,7 @@
         }
 
         .activity-list {
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
         }
 
@@ -569,20 +573,113 @@
         </div>
     </div>
 
+    <!-- Modal för att redigera aktivitet -->
+    <div id="edit-activity-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Redigera aktivitet</div>
+            
+            <div class="form-group">
+                <label class="form-label" for="edit-activity-name">Aktivitetsnamn</label>
+                <input type="text" id="edit-activity-name" class="form-input" placeholder="T.ex. Projektmöte">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="edit-activity-month">Månad</label>
+                <select id="edit-activity-month" class="form-input">
+                    <option value="0">Januari</option>
+                    <option value="1">Februari</option>
+                    <option value="2">Mars</option>
+                    <option value="3">April</option>
+                    <option value="4">Maj</option>
+                    <option value="5">Juni</option>
+                    <option value="6">Juli</option>
+                    <option value="7">Augusti</option>
+                    <option value="8">September</option>
+                    <option value="9">Oktober</option>
+                    <option value="10">November</option>
+                    <option value="11">December</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Färg</label>
+                <div class="color-picker" id="edit-color-picker">
+                    <!-- Färgalternativ läggs till av JavaScript -->
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideEditForm()">Avbryt</button>
+                <button class="btn" onclick="updateActivity()">Spara ändringar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variabler
         let activities = {
-            0: [{ id: 1, name: 'Projektstart', color: '#48606B' }], // Januari - Primärfärg blågrå
+            0: [
+                { id: 1, name: 'Verksamhetsplan', color: '#48606B' },
+                { id: 2, name: 'Bevaka stimulansmedel', color: '#48606B' }
+            ], // Januari - SOC Ledning
             1: [
-                { id: 2, name: 'Kund A möte', color: '#00A78B' }, // Februari - Primärfärg turkos
-                { id: 3, name: 'Design review', color: '#5863C7' } // Februari - Primärfärg blå
-            ],
-            5: [{ id: 4, name: 'Semester', color: '#88A8B5' }], // Juni - Ljus sekundärfärg
-            11: [{ id: 5, name: 'Årsbokslut', color: '#9D3E9E' }] // December - Primärfärg lila
+                { id: 3, name: 'Årsredovisning', color: '#00A78B' },
+                { id: 4, name: 'Ej verkställda beslut LSS och SoL kv.4', color: '#00A78B' },
+                { id: 5, name: 'Sjukfrånvaro, tillbud och arbetsskador', color: '#00A78B' },
+                { id: 6, name: 'Resultat brukarundersökningar ÄO och Funktionsstöd', color: '#00A78B' },
+                { id: 7, name: 'Investeringsbudget', color: '#00A78B' }
+            ], // Februari - Socialnämnden
+            2: [
+                { id: 8, name: 'Verksamhetsuppföljning', color: '#48606B' },
+                { id: 9, name: 'Brukarundersökning LSS – anmälan', color: '#48606B' },
+                { id: 10, name: 'Verksamhets- och ekonomirapport feb', color: '#00A78B' }
+            ], // Mars - Både SOC Ledning och Socialnämnden
+            3: [
+                { id: 11, name: 'Verksamhets- och ekonomirapport mars', color: '#00A78B' },
+                { id: 12, name: 'Patientsäkerhetsberättelse', color: '#00A78B' },
+                { id: 13, name: 'Mål- och budget', color: '#00A78B' }
+            ], // April - Socialnämnden
+            4: [
+                { id: 14, name: 'Verksamhets- och ekonomirapport apr', color: '#00A78B' },
+                { id: 15, name: 'Ej verkställda beslut LSS och SoL, kv. 1', color: '#00A78B' }
+            ], // Maj - Socialnämnden
+            5: [
+                { id: 16, name: 'Verksamhets- och ekonomirapport maj', color: '#00A78B' }
+            ], // Juni - Socialnämnden
+            7: [
+                { id: 17, name: 'Verksamhetsuppföljning', color: '#48606B' }
+            ], // Augusti - SOC Ledning
+            8: [
+                { id: 18, name: 'Brukarundersökning LSS – genomförande', color: '#48606B' },
+                { id: 19, name: 'Delårsredovisning', color: '#00A78B' },
+                { id: 20, name: 'Ej verkställda beslut LSS och SoL, kv. 2', color: '#00A78B' }
+            ], // September - Både SOC Ledning och Socialnämnden
+            9: [
+                { id: 21, name: 'Verksamhetsuppföljning', color: '#48606B' },
+                { id: 22, name: 'Verksamhets- och ekonomirapport sep', color: '#00A78B' }
+            ], // Oktober - Både SOC Ledning och Socialnämnden
+            10: [
+                { id: 23, name: 'Verksamhets- och ekonomirapport okt', color: '#00A78B' },
+                { id: 24, name: 'Ej verkställda beslut LSS och SoL, kv. 3', color: '#00A78B' }
+            ], // November - Socialnämnden
+            11: [
+                { id: 25, name: 'Återrapportera stimulansmedel', color: '#48606B' },
+                { id: 26, name: 'Verksamhets- och ekonomirapport nov', color: '#00A78B' },
+                { id: 27, name: 'Delegationsordning', color: '#00A78B' },
+                { id: 28, name: 'Informationshanteringsplan', color: '#00A78B' },
+                { id: 29, name: 'Arkivbeskrivning', color: '#00A78B' },
+                { id: 30, name: 'Internbudget', color: '#00A78B' },
+                { id: 31, name: 'Attestförteckning', color: '#00A78B' },
+                { id: 32, name: 'Arbetsmiljöstrategi', color: '#00A78B' },
+                { id: 33, name: 'Internkontrollplan', color: '#00A78B' },
+                { id: 34, name: 'Självskattning internkontroll', color: '#00A78B' }
+            ] // December - Både SOC Ledning och Socialnämnden
         };
 
         let selectedMonth = null;
         let selectedColor = '#48606B'; // Starta med primärfärgen
+        let selectedEditColor = '#48606B'; // För redigeringsmodalen
+        let editingActivity = null; // Håller reda på vilken aktivitet som redigeras
         let isLoggedIn = false; // Alltid börja utloggad
 
         const months = [
@@ -591,8 +688,8 @@
         ];
 
         const colors = [
-            '#48606B', // Primärfärg - Blågrå
-            '#00A78B', // Primärfärg - Turkos
+            '#48606B', // SOC Ledning - Blågrå
+            '#00A78B', // Socialnämnden - Turkos
             '#5863C7', // Primärfärg - Blå
             '#9D3E9E', // Primärfärg - Lila
             '#D5422D', // Primärfärg - Röd
@@ -615,7 +712,9 @@
         });
 
         function initializeColorPicker() {
+            // Initiera färgväljaren för "Lägg till"-modalen
             const colorPicker = document.getElementById('color-picker');
+            colorPicker.innerHTML = '';
             colors.forEach(color => {
                 const colorOption = document.createElement('div');
                 colorOption.className = 'color-option';
@@ -626,11 +725,25 @@
                 colorOption.onclick = () => selectColor(color);
                 colorPicker.appendChild(colorOption);
             });
+
+            // Initiera färgväljaren för "Redigera"-modalen
+            const editColorPicker = document.getElementById('edit-color-picker');
+            editColorPicker.innerHTML = '';
+            colors.forEach(color => {
+                const colorOption = document.createElement('div');
+                colorOption.className = 'color-option';
+                colorOption.style.backgroundColor = color;
+                if (color === selectedEditColor) {
+                    colorOption.classList.add('selected');
+                }
+                colorOption.onclick = () => selectEditColor(color);
+                editColorPicker.appendChild(colorOption);
+            });
         }
 
         function selectColor(color) {
             selectedColor = color;
-            document.querySelectorAll('.color-option').forEach(option => {
+            document.querySelectorAll('#color-picker .color-option').forEach(option => {
                 option.classList.remove('selected');
                 if (option.style.backgroundColor === color) {
                     option.classList.add('selected');
@@ -638,25 +751,119 @@
             });
         }
 
+        function selectEditColor(color) {
+            selectedEditColor = color;
+            document.querySelectorAll('#edit-color-picker .color-option').forEach(option => {
+                option.classList.remove('selected');
+                if (option.style.backgroundColor === color) {
+                    option.classList.add('selected');
+                }
+            });
+        }
+
+        function showEditForm(monthIndex, activityId) {
+            if (!isLoggedIn) {
+                showAdminLogin();
+                return;
+            }
+
+            // Hitta aktiviteten som ska redigeras
+            const activity = activities[monthIndex]?.find(a => a.id === activityId);
+            if (!activity) {
+                alert('Aktivitet hittades inte');
+                return;
+            }
+
+            // Spara referens till aktiviteten som redigeras
+            editingActivity = { month: monthIndex, id: activityId };
+
+            // Fyll i formuläret med nuvarande värden
+            document.getElementById('edit-activity-name').value = activity.name;
+            document.getElementById('edit-activity-month').value = monthIndex;
+            selectedEditColor = activity.color;
+
+            // Uppdatera färgväljaren
+            initializeColorPicker();
+
+            // Visa modalen
+            document.getElementById('edit-activity-modal').classList.add('active');
+        }
+
+        function hideEditForm() {
+            document.getElementById('edit-activity-modal').classList.remove('active');
+            editingActivity = null;
+        }
+
+        function updateActivity() {
+            if (!isLoggedIn || !editingActivity) {
+                alert('Du måste logga in för att redigera aktiviteter.');
+                return;
+            }
+
+            const newName = document.getElementById('edit-activity-name').value.trim();
+            const newMonth = parseInt(document.getElementById('edit-activity-month').value);
+
+            if (!newName) {
+                alert('Vänligen ange ett aktivitetsnamn');
+                return;
+            }
+
+            const oldMonth = editingActivity.month;
+            const activityId = editingActivity.id;
+
+            // Ta bort aktiviteten från den gamla månaden
+            if (activities[oldMonth]) {
+                activities[oldMonth] = activities[oldMonth].filter(activity => activity.id !== activityId);
+                if (activities[oldMonth].length === 0) {
+                    delete activities[oldMonth];
+                }
+            }
+
+            // Lägg till aktiviteten i den nya månaden med uppdaterade värden
+            if (!activities[newMonth]) {
+                activities[newMonth] = [];
+            }
+
+            activities[newMonth].push({
+                id: activityId,
+                name: newName,
+                color: selectedEditColor
+            });
+
+            // Uppdatera vyn
+            renderCalendar();
+            renderActivityList();
+            hideEditForm();
+        }
+
         function renderCalendar() {
             const svg = document.getElementById('calendar-svg');
             svg.innerHTML = '';
 
-            const centerX = 200;
-            const centerY = 200;
+            // Fasta värden för kompakt design
+            const svgSize = 500; // Fast storlek
+            const centerX = svgSize / 2;
+            const centerY = svgSize / 2;
             const baseRadius = 60;
-            const ringWidth = 25;
-            const outerLabelRadius = 180; // Radius för yttre cirkel med månadsnamn
-
-            // Först, beräkna maxradie för att bestämma yttre cirkelns storlek
-            let globalMaxRadius = baseRadius;
+            const maxOuterRadius = 190; // Max radie för aktiviteter
+            const outerLabelRadius = 220; // Radius för månadsnamn
+            
+            // Hitta den månad som har flest aktiviteter för att beräkna ringbredden
+            let maxActivitiesCount = 0;
             for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
                 const monthActivities = activities[monthIndex] || [];
-                const maxRadius = baseRadius + (monthActivities.length * ringWidth);
-                if (maxRadius > globalMaxRadius) {
-                    globalMaxRadius = maxRadius;
+                if (monthActivities.length > maxActivitiesCount) {
+                    maxActivitiesCount = monthActivities.length;
                 }
             }
+            
+            // Beräkna optimal ringbredd baserat på tillgängligt utrymme
+            const availableSpace = maxOuterRadius - baseRadius;
+            const ringWidth = Math.max(8, Math.min(20, availableSpace / maxActivitiesCount));
+
+            // Uppdatera SVG-storleken (fast storlek)
+            svg.setAttribute('width', svgSize);
+            svg.setAttribute('height', svgSize);
 
             // Rita yttre cirkel med månadsnamn
             const outerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -778,7 +985,7 @@
                 const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 textElement.className = 'month-label';
                 textElement.setAttribute('text-anchor', 'middle');
-                textElement.setAttribute('font-size', '12');
+                textElement.setAttribute('font-size', '13'); // Fast fontstorlek för läsbarhet
                 textElement.setAttribute('font-weight', '600');
                 textElement.setAttribute('fill', '#374151');
                 textElement.style.cursor = 'pointer';
@@ -852,7 +1059,7 @@
             
             // Uppdatera titel
             titleElement.textContent = selectedMonth !== null ? 
-                `${months[selectedMonth]} aktiviteter` : 'Alla aktiviteter';
+                `Aktiviteter för ${months[selectedMonth]}` : 'Alla aktiviteter';
             
             // Hämta filtrerade aktiviteter
             const filteredActivities = getFilteredActivities();
@@ -875,10 +1082,15 @@
                         <div class="activity-color" style="background-color: ${activity.color}"></div>
                         <div class="activity-details">
                             <h3>${activity.name}</h3>
-                            <p>${months[activity.month]}</p>
+                            <p>${months[activity.month]} - ${activity.color === '#48606B' ? 'SOC Ledning' : 'Socialnämnden'}</p>
                         </div>
                     </div>
-                    ${isLoggedIn ? `<button class="btn btn-danger" onclick="removeActivity(${activity.month}, ${activity.id})">Ta bort</button>` : ''}
+                    ${isLoggedIn ? `
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="showEditForm(${activity.month}, ${activity.id})">Redigera</button>
+                            <button class="btn btn-danger" onclick="removeActivity(${activity.month}, ${activity.id})">Ta bort</button>
+                        </div>
+                    ` : ''}
                 </div>
             `).join('');
         }
@@ -1035,6 +1247,13 @@
         document.getElementById('add-activity-modal').addEventListener('click', function(e) {
             if (e.target === this) {
                 hideAddForm();
+            }
+        });
+
+        // Stäng redigeringsmodal vid klick utanför
+        document.getElementById('edit-activity-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideEditForm();
             }
         });
 
